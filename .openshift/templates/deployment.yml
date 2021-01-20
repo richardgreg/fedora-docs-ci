@@ -1,0 +1,170 @@
+apiVersion: template.openshift.io/v1
+kind: Template
+labels:
+  template: fedora-docs
+metadata:
+  annotations:
+    description: Application template for Fedora docs built using a Jenkins Pipeline
+    iconClass: icon-fedora
+    tags: python
+  name: fedora-docs
+objects:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      description: The web server's http port.
+    labels:
+      app.kubernetes.io/name: ${APPLICATION_NAME}
+      app.kubernetes.io/instance: ${APPLICATION_NAME}
+      app.kubernetes.io/component: api
+      app.kubernetes.io/part-of: ${APPLICATION_NAME}
+      app.kubernetes.io/managed-by: applier
+    name: ${APPLICATION_NAME}
+    namespace: ${NAMESPACE}
+  spec:
+    ports:
+    - port: 8080
+      targetPort: 8080
+    selector:
+      deploymentConfig: ${APPLICATION_NAME}
+- apiVersion: route.openshift.io/v1
+  kind: Route
+  metadata:
+    annotations:
+      description: Route for application's http service.
+    labels:
+      app.kubernetes.io/name: ${APPLICATION_NAME}
+      app.kubernetes.io/instance: ${APPLICATION_NAME}
+      app.kubernetes.io/component: api
+      app.kubernetes.io/part-of: ${APPLICATION_NAME}
+      app.kubernetes.io/managed-by: applier
+    name: ${APPLICATION_NAME}
+    namespace: ${NAMESPACE}
+  spec:
+    host: ${HOSTNAME_HTTP}
+    to:
+      name: ${APPLICATION_NAME}
+- apiVersion: image.openshift.io/v1
+  kind: ImageStream
+  metadata:
+    labels:
+      app.kubernetes.io/name: ${APPLICATION_NAME}
+      app.kubernetes.io/instance: ${APPLICATION_NAME}
+      app.kubernetes.io/component: api
+      app.kubernetes.io/part-of: ${APPLICATION_NAME}
+      app.kubernetes.io/managed-by: applier
+    name: ${APPLICATION_NAME}
+    namespace: ${NAMESPACE}
+- apiVersion: apps.openshift.io/v1
+  kind: DeploymentConfig
+  metadata:
+    labels:
+      app.kubernetes.io/name: ${APPLICATION_NAME}
+      app.kubernetes.io/instance: ${APPLICATION_NAME}
+      app.kubernetes.io/component: api
+      app.kubernetes.io/part-of: ${APPLICATION_NAME}
+      app.kubernetes.io/managed-by: applier
+    name: ${APPLICATION_NAME}
+    namespace: ${NAMESPACE}
+  spec:
+    replicas: 1
+    selector:
+      deploymentConfig: ${APPLICATION_NAME}
+    strategy:
+      type: Recreate
+    template:
+      metadata:
+        labels:
+          app.kubernetes.io/name: ${APPLICATION_NAME}
+          app.kubernetes.io/instance: ${APPLICATION_NAME}
+          app.kubernetes.io/component: api
+          app.kubernetes.io/part-of: ${APPLICATION_NAME}
+          app.kubernetes.io/managed-by: applier
+          deploymentConfig: ${APPLICATION_NAME}
+        name: ${APPLICATION_NAME}
+      spec:
+        containers:
+        - env:
+          - name: JWS_ADMIN_USERNAME
+            value: ${JWS_ADMIN_USERNAME}
+          - name: JWS_ADMIN_PASSWORD
+            value: ${JWS_ADMIN_PASSWORD}
+          image: ${APPLICATION_NAME}
+          imagePullPolicy: Always
+          name: ${APPLICATION_NAME}
+          ports:
+          - containerPort: 8778
+            name: jolokia
+            protocol: TCP
+          - containerPort: 8080
+            name: http
+            protocol: TCP
+          readinessProbe:
+            exec:
+              command:
+              - /bin/bash
+              - -c
+              - curl -s 'http://localhost:8080${READINESS_PATH}'
+                |grep -iq '${READINESS_RESPONSE}'
+        terminationGracePeriodSeconds: 60
+    triggers:
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - ${APPLICATION_NAME}
+        from:
+          kind: ImageStreamTag
+          name: ${APPLICATION_NAME}:latest
+      type: ImageChange
+    - type: ConfigChange
+- apiVersion: rbac.authorization.k8s.io/v1
+  kind: RoleBinding
+  metadata:
+    creationTimestamp: null
+    labels:
+      app.kubernetes.io/name: ${APPLICATION_NAME}
+      app.kubernetes.io/instance: ${APPLICATION_NAME}
+      app.kubernetes.io/component: api
+      app.kubernetes.io/part-of: ${APPLICATION_NAME}
+      app.kubernetes.io/managed-by: applier
+      template: basic-tomcat-template
+    name: jenkins_edit
+    namespace: ${NAMESPACE}
+  groupNames: null
+  roleRef:
+    apiGroup: rbac.authorization.k8s.io
+    kind: ClusterRole
+    name: edit
+  subjects:
+  - kind: ServiceAccount
+    name: ${SA_NAME}
+    namespace: ${SA_NAMESPACE}
+  userNames:
+  - system:serviceaccount:${SA_NAMESPACE}:${SA_NAME}
+parameters:
+- description: The name for the application.
+  name: APPLICATION_NAME
+  required: true
+  value: fedora-docs
+- description: The namespace to deploy into
+  name: NAMESPACE
+  required: true
+- description: Name of a service account that can deploy to this project
+  name: SA_NAME
+  required: true
+  value: jenkins
+- description: Namespace of service account that can deploy to this project
+  name: SA_NAMESPACE
+  required: true
+- description: 'Custom hostname for http service route.  Leave blank for default hostname,
+    e.g.: <application-name>-<project>.<default-domain-suffix>'
+  name: HOSTNAME_HTTP
+- description: 'URI to check for app health'
+  name: READINESS_PATH
+  required: true
+  value: '/'
+- description: 'String value expected back from readiness check'
+  name: READINESS_RESPONSE
+  required: true
+  value: 'Hello World!'

@@ -1,0 +1,134 @@
+apiVersion: template.openshift.io/v1
+kind: Template
+labels:
+  template: fedora-docs-jenkins-pipeline
+metadata:
+  annotations:
+    description: Application template for Fedora docs built using a Jenkins Pipeline
+    iconClass: icon-fedora
+    tags: python, jenkins-ci
+  name: fedora-docs-jenkins-pipeline
+objects:
+- apiVersion: image.openshift.io/v1
+  kind: ImageStream
+  metadata:
+    labels:
+      app.kubernetes.io/name: ${APPLICATION_NAME}
+      app.kubernetes.io/instance: ${APPLICATION_NAME}-build
+      app.kubernetes.io/component: api
+      app.kubernetes.io/part-of: ${APPLICATION_NAME}
+    name: ${APPLICATION_NAME}
+    namespace: ${NAMESPACE}
+- apiVersion: build.openshift.io/v1
+  kind: BuildConfig
+  metadata:
+    labels:
+      app.kubernetes.io/name: ${APPLICATION_NAME}
+      app.kubernetes.io/instance: ${APPLICATION_NAME}-build
+      app.kubernetes.io/component: api
+      app.kubernetes.io/part-of: ${APPLICATION_NAME}
+    name: "${APPLICATION_NAME}-pipeline"
+    namespace: "${NAMESPACE}"
+  spec:
+    source:
+      type: Git
+      git:
+        uri: ${SOURCE_REPOSITORY_URL}
+        ref: ${SOURCE_REPOSITORY_REF}
+    triggers:
+    - type: "Generic"
+      generic:
+        allowEnv: true
+        secret: ${GENERIC_WEBHOOK_SECRET}
+    - type: "ConfigChange"
+    strategy:
+      type: "JenkinsPipeline"
+      jenkinsPipelineStrategy:
+        jenkinsfilePath: ${PIPELINE_SCRIPT}
+        env:
+        - name: "APP_NAME"
+          value: "${APPLICATION_NAME}"
+        - name: "APPLICATION_SOURCE_REPO"
+          value: "${APPLICATION_SOURCE_REPO}"
+        - name: "APPLICATION_SOURCE_REF"
+          value: "${APPLICATION_SOURCE_REF}"
+        - name: "NAMESPACE_BUILD"
+          value: "${NAMESPACE}"
+        - name: "NAMESPACE_STAGE"
+          value: "${NAMESPACE_STAGE}"
+        - name: "NAMESPACE_PROD"
+          value: "${NAMESPACE_PROD}"
+- apiVersion: build.openshift.io/v1
+  kind: BuildConfig
+  metadata:
+    labels:
+      app.kubernetes.io/name: ${APPLICATION_NAME}
+      app.kubernetes.io/instance: ${APPLICATION_NAME}-build
+      app.kubernetes.io/component: api
+      app.kubernetes.io/part-of: ${APPLICATION_NAME}
+    name: ${APPLICATION_NAME}
+    namespace: "${NAMESPACE}"
+  spec:
+    output:
+      to:
+        kind: ImageStreamTag
+        name: ${APPLICATION_NAME}:latest
+    source:
+      binary: {}
+      type: Binary
+    strategy:
+      sourceStrategy:
+        from:
+          kind: ImageStreamTag
+          name: ${IMAGE_STREAM_TAG_NAME}
+          namespace: ${IMAGE_STREAM_NAMESPACE}
+      type: Source
+parameters:
+- description: The name for the application.
+  name: APPLICATION_NAME
+  required: true
+  value: fedora-docs
+- description: The namespace that will contain the build resources defined in this template
+  name: NAMESPACE
+  required: true
+- description: Git source URI for application
+  name: SOURCE_REPOSITORY_URL
+  required: true
+  value: https://github.com/richardgreg/fedora-docs-cicd
+- description: Git branch/tag reference
+  name: SOURCE_REPOSITORY_REF
+  value: "master"
+- description: Source code repo for app
+  name: APPLICATION_SOURCE_REPO
+  required: true
+  value: https://pagure.io/fedora-docs/docs-fp-o
+- description: Source code branch for demo app
+  name: APPLICATION_SOURCE_REF
+  value: stg
+- description: Path within Git project pointing to the pipeline run script
+  name: PIPELINE_SCRIPT
+  value: Jenkinsfile
+- description: The namespace containing stage resources
+  name: NAMESPACE_STAGE
+  required: true
+  value: fedora-documentation-stage
+- description: The namespace containing prod resources
+  name: NAMESPACE_PROD
+  required: true
+  value: fedora-documentation-prod
+- description: Generic build trigger secret
+  from: '[a-zA-Z0-9]{8}'
+  generate: expression
+  name: GENERIC_WEBHOOK_SECRET
+  required: true
+- description: Namespace in which the ImageStreams for Red Hat Middleware images are
+    installed. These ImageStreams are normally installed in the openshift namespace.
+    You should only need to modify this if you've installed the ImageStreams in a
+    different namespace/project.
+  name: IMAGE_STREAM_NAMESPACE
+  required: true
+  value: openshift
+- description: Image stream tag for the image you'd like to use to build the application
+  name: IMAGE_STREAM_TAG_NAME
+  required: true
+  value: python:3.6
