@@ -1,6 +1,6 @@
 openshift.withCluster() {
   env.NAMESPACE = openshift.project()
-  env.BUILD_SCRIPT = env.BUILD_CONTEXT_DIR ? "${env.BUILD_CONTEXT_DIR}/build.sh" : "build.sh"
+  env.BUILD_SCRIPT = env.BUILD_CONTEXT_DIR ? "${env.BUILD_CONTEXT_DIR}/site.yml" : "site.yml"
   echo "Starting Pipeline for ${env.APP_NAME}..."
   env.BUILD = "${env.NAMESPACE_BUILD}"
   env.STAGE = "${env.NAMESPACE_STAGE}"
@@ -8,14 +8,11 @@ openshift.withCluster() {
 }
 
 pipeline {
-  // Use Jenkins Maven slave
   // Jenkins will dynamically provision this as OpenShift Pod
   // All the stages and steps of this Pipeline will be executed on this Pod
   // After Pipeline completes the Pod is killed so every run will have clean
   // workspace
-  agent {
-    label 'maven'
-  }
+  agent any
 
   // Pipeline Stages start here
   // Requires at least one stage
@@ -32,14 +29,15 @@ pipeline {
       }
     }
 
-    // Run Maven build, skipping tests
     stage('Build'){
       steps {
+        sh 'ls'
+      }
+    }
 
-        sh """
-        sudo dnf install podman
-        ./${BUILD_SCRIPT}
-        """
+    stage('Test'){
+      steps {
+        sh "apt-get install podman"
       }
     }
   }
