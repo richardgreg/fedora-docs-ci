@@ -29,16 +29,5 @@ pipeline {
       }
     }
 
-    stage('Build'){
-      steps {
-        sh 'ls'
-      }
-    }
-
-    stage('Test'){
-      steps {
-        sh "apt-get install podman"
-      }
-    }
   }
 }
