@@ -11,6 +11,6 @@ Information on enabling continuous integration for the Fedora documentation webs
 `$ pip install -r requirements.txt.`
 
 ### Build and preview the the docs repo with the build script
-`$ python build.py <docs_fp_o_url> -b <docs_fp_o_branch> <docs_repo_url> <docs_repo_branch>`
+`$ python build.py <pagure_pr_api>`
 
 Visit 0.0.0.0:8000/ to preview site
