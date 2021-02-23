@@ -7,7 +7,9 @@ Information on enabling continuous integration for the Fedora documentation webs
 
 ### Create and activate a python virtual environment
 `python3 -m venv venv`
+
 `source venv/bin/activate`
+
 `$ pip install -r requirements.txt.`
 
 ### Build and preview the the docs repo with the build script
