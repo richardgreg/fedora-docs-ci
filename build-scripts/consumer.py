@@ -26,9 +26,7 @@ def build(message):
     if message.topic == "io.pagure.prod.pagure.pull-request.new":
         pr_data = message._body['pullrequest']
         if pr_data['project']['namespace'] == 'fedora-docs':
-            get_docs_builder()
-            build_docs(pr_data)
-            serve_docs()
+            get_docs_builder(pr_data)
 
 
 if __name__ == "__main__":

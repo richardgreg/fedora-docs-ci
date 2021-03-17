@@ -16,3 +16,7 @@ Information on enabling continuous integration for the Fedora documentation webs
 `$ python build.py <pagure_pr_api>`
 
 Visit 0.0.0.0:8000/ to preview site
+
+
+### Possible improvements
+Run podman using the podman API as an alternative to os.system
