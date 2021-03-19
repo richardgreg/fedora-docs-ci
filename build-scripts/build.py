@@ -3,26 +3,11 @@
 import os
 import argparse
 from git import Repo
-import http.server
-import socketserver
 import tempfile
 import yaml
 import requests
+import shutil
 
-
-class Handler(http.server.SimpleHTTPRequestHandler):
-    """
-    Custom class definition for simple http server
-    Used for testing built docs in development
-    """
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, directory=DIRECTORY, **kwargs)
-
-
-# Port and directory to serve the built files
-PORT = 8000
-DIRECTORY = 'public'
-handler = Handler
 
 DOCS_BUILDER_URL = "https://pagure.io/fedora-docs/docs-fp-o.git"
 DOCS_BUILDER_BRANCH = 'prod'
@@ -71,8 +56,28 @@ def get_docs_builder(pr_data):
     # data from site.yml This is used when writing to Apache config
     playbook_data = build_docs(pr_data)
 
-    # Write Apache configurations
-    write_apache_configurations(pr_data, playbook_data, temp_dir)
+    # Check if a folder with the name intended for the PR build already exist.
+    # delete if it does, else move built doc to the folder where apache will serve it
+    if os.path.exists(f"/var/www/html/{pr_data['project']['name']}-pr{pr_data['id']}"):
+        shutil.rmtree(f"/var/www/html/{pr_data['project']['name']}-pr{pr_data['id']}")
+    try:
+        shutil.move(f"{temp_dir.name + playbook_data['output']['dir'][1:]}",
+                    f"/var/www/html/{pr_data['project']['name']}-pr{pr_data['id']}")
+    except PermissionError:
+        print("Operation not permitted.")
+    # For other errors
+    except shutil.Error as error:
+        print(error)
+
+    # Make sure folder is deleted after being cloned
+    try:
+        shutil.rmtree(temp_dir.name)
+    except FileNotFoundError:
+        print("File not found or already deleted")
+    except PermissionError:
+        print("Operation not permitted.")
+    else:
+        print("Temporary directory has been deleted")
 
 
 def build_docs(pr_data):
@@ -106,36 +111,25 @@ def build_docs(pr_data):
     return playbook_data
 
 
-def write_apache_configurations(pr_data, playbook_data, temp_dir):
+def post_messenger(pr_data):
     """
-    Write apache configuration for the built site
+    Posts a comment under the PR with the link to the build
 
-    Args:
-        A dict object containing information about a pull request
-        Antora playbook data as a dict object
-        The temporary directory containing the docs builder
+    Args: A dict object with information about a pull request
     """
-    # Open the custom apache configuration and add the document root
-    # and server name to the file
-    with open('/etc/httpd/conf.d/myconf.conf', 'a+') as f:
-	    f.write(f"""
-            <VirtualHost *:80>
-                DocumentRoot {temp_dir.name + playbook_data['output']['dir'][1:]}
-                ServerName fedoradocs.pr{pr_data['id']}.com
-            </VirtualHost>""")
+    API_KEY = "XXXXXXXXXXXXXXXXXXXXX"
+    API_ENDPOINT = f"https://pagure.io/api/0/{pr_data['full_url'][18:]}/comment"
 
-    # Open the system host file and add the custom host name to the list
-    with open('/etc/hosts', 'a+') as f:
-        f.write(f"""127.0.0.1  fedoradocs.pr{pr_data['id']}.com""")
+    comment = f"Thank you for your contribution. Use the following link to see a \
+preview of your contribution.\nDNS/{pr_data['project']['name']}-pr{pr_data['id']}"
 
+    data = {
+        'comment': comment
+    }
 
-def serve_docs():
-    """
-    A simple http server to serve file
-    """
-    with socketserver.TCPServer(("", PORT), handler) as httpd:
-        print("Server started at 0.0.0.0:" + str(PORT))
-        httpd.serve_forever()
+    headers = {'Authorization': f'token {API_KEY}'}
+
+    requests.post(url=API_ENDPOINT, data=data, headers=headers)
 
 
 if __name__ == "__main__":

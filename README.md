@@ -1,9 +1,20 @@
 # CI for Fedora Docs
-Information on enabling continuous integration for the Fedora documentation website.
+Documentation on enabling continuous integration for the Fedora documentation website.
 
 ## Using the build script
 ### Requirements
-`python3, podman`
+`python3, podman, Apache server` 
+
+### Cofigure the Apache server
+* Install HTTPD packages.
+
+    `sudo dnf install httpd -y`
+
+* Start the HTTPD service.
+
+    `sudo systemctl start httpd.service`
+
+* (Optional) Add custom servername to /etc/hosts
 
 ### Create and activate a python virtual environment
 `python3 -m venv venv`
@@ -12,11 +23,5 @@ Information on enabling continuous integration for the Fedora documentation webs
 
 `$ pip install -r requirements.txt.`
 
-### Build and preview the the docs repo with the build script
-`$ python build.py <pagure_pr_api>`
-
-Visit 0.0.0.0:8000/ to preview site
-
-
-### Possible improvements
-Run podman using the podman API as an alternative to os.system
+### Listen to and build PRs opened against Fedora Docs by running the consumer script
+`$ python build-scripts/consumer.py`

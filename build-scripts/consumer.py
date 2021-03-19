@@ -21,12 +21,20 @@ def build(message):
     """
     Build a pull request opened against fedora docs
 
-    Args: a message object
+    Args: a message object from Fedora Messages
     """
     if message.topic == "io.pagure.prod.pagure.pull-request.new":
         pr_data = message._body['pullrequest']
         if pr_data['project']['namespace'] == 'fedora-docs':
             get_docs_builder(pr_data)
+            post_messenger(pr_data)
+
+    if message.topic == "io.pagure.prod.pagure.pull-request.rebased" or
+    message.topic == 'io.pagure.prod.pagure.pull-request.updated':
+        pr_data = message._body['pullrequest']
+        if pr_data['project']['namespace'] == 'fedora-docs':
+            get_docs_builder(pr_data)
+        
 
 
 if __name__ == "__main__":
