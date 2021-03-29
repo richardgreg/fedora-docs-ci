@@ -7,7 +7,10 @@ import tempfile
 import yaml
 import requests
 import shutil
+from dotenv import load_dotenv
 
+
+load_dotenv()
 
 DOCS_BUILDER_URL = "https://pagure.io/fedora-docs/docs-fp-o.git"
 DOCS_BUILDER_BRANCH = 'prod'
@@ -111,17 +114,20 @@ def build_docs(pr_data):
     return playbook_data
 
 
-def post_messenger(pr_data):
+def post_comment(pr_data):
     """
     Posts a comment under the PR with the link to the build
 
     Args: A dict object with information about a pull request
     """
-    API_KEY = "XXXXXXXXXXXXXXXXXXXXX"
+    token = os.environ.get("api-key")
+    API_KEY = token
     API_ENDPOINT = f"https://pagure.io/api/0/{pr_data['full_url'][18:]}/comment"
 
     comment = f"Thank you for your contribution. Use the following link to see a \
-preview of your contribution.\nDNS/{pr_data['project']['name']}-pr{pr_data['id']}"
+preview of your contribution.\nDNS/{pr_data['project']['name']}-pr{pr_data['id']}. \
+Do keep in mind that the build gets deleted if there is no update for more than a \
+period of 2 weeks."
 
     data = {
         'comment': comment

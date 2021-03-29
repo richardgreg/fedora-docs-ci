@@ -1,4 +1,5 @@
 from fedora_messaging import api, config
+from build import post_comment
 
 
 null = "null"
@@ -8,6 +9,8 @@ true = True
 # A sample PR message object for testing the build script.
 topic = "io.pagure.prod.pagure.pull-request.new"
 body = {
+    "agent": "richardgreg",
+    "pullrequest": {
         "assignee": null,
         "branch": "master",
         "branch_from": "typo_fix",
@@ -19,7 +22,7 @@ body = {
         "commit_stop": "2be761e03c828fc2ab8709255d4f2946bb7e0e30",
         "date_created": "1614356479",
         "full_url": "https://pagure.io/fedora-docs/quick-docs/pull-request/347",
-        "id": 347,
+        "id": 348,
         "initial_comment": "Ignore this PR. It's for testing purposes.",
         "last_updated": "1614356479",
         "project": {
@@ -199,6 +202,7 @@ body = {
             "url_path": "user/richardgreg"
         }
     }
+}
 
 
 config.conf.setup_logging()

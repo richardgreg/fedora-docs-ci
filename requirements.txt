@@ -2,3 +2,5 @@ GitPython
 PyYAML
 requests
 fedora-messaging
+python-dotenv
+python-crontab
