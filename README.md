@@ -16,9 +16,9 @@ Documentation on enabling continuous integration for the Fedora documentation we
 
 * (Optional) Add custom servername to /etc/hosts
 
-* Configure Fedora Messaging public broker.
+* Configure Fedora Messaging public broker. Responsible for listening to activities on on doc repos.
 
-    [Fedora’s Public Broker](https://fedora-messaging.readthedocs.io/en/stable/quick-start.html#fedora-s-public-broker)
+    [Fedora Public Broker](https://fedora-messaging.readthedocs.io/en/stable/quick-start.html#fedora-s-public-broker)
 
 ### Create and activate a python virtual environment
 `python3 -m venv venv`

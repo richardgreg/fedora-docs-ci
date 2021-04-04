@@ -2,7 +2,8 @@
 
 from fedora_messaging.api import consume
 from fedora_messaging.config import conf
-from build import get_docs_builder, post_messenger
+from build import get_docs_builder, post_comment
+from sites import site_list
 
 
 conf.setup_logging()
@@ -15,7 +16,7 @@ def print_message(message):
     Args: a message object
     """
     print(message.topic)
-    print(message._body['pullrequest'])
+    print(message.body['pullrequest'])
 
 
 def build(message):
@@ -25,18 +26,17 @@ def build(message):
     Args: a message object from Fedora Messages
     """
     if message.topic == "io.pagure.prod.pagure.pull-request.new":
-        pr_data = message._body['pullrequest']
-        if pr_data['project']['namespace'] == 'fedora-docs':
+        pr_data = message.body['pullrequest']
+        if pr_data['project']['full_url'] + '.git' in site_list:
             get_docs_builder(pr_data)
             post_comment(pr_data)
 
     if message.topic == "io.pagure.prod.pagure.pull-request.rebased" or \
             message.topic == 'io.pagure.prod.pagure.pull-request.updated':
-        pr_data = message._body['pullrequest']
-        if pr_data['project']['namespace'] == 'fedora-docs':
+        pr_data = message.body['pullrequest']
+        if pr_data['project']['full_url']  +'.git' in site_list:
             get_docs_builder(pr_data)
 
-    
 
 if __name__ == "__main__":
     conf.setup_logging()
