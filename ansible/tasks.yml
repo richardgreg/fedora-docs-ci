@@ -1,0 +1,23 @@
+--- 
+
+- name: Set up an httpd webserver
+  hosts: fedora-docs-server
+  tasks:
+  - name: Install apache packages 
+    dnf:
+      name: httpd
+      state: latest
+  - name: ensure httpd is running
+    service:
+      name: httpd 
+      state: started
+  - name: Open port 80 for http access
+    firewalld:
+      service: http
+      permanent: true
+      state: enabled
+  - name: Restart the firewalld service to load in the firewall changes
+    service: 
+      name: firewalld 
+      state: restarted
+

@@ -4,3 +4,4 @@ requests
 fedora-messaging
 python-dotenv
 python-crontab
+dnf
