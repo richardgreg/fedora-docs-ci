@@ -2,7 +2,11 @@
 
 from fedora_messaging.api import consume
 from fedora_messaging.config import conf
-from build import get_docs_builder, post_comment
+from build import (
+    get_docs_builder,
+    post_successful_build_comment,
+    post_unsuccessful_build_comment
+)
 from sites import site_list
 
 
@@ -28,13 +32,17 @@ def build(message):
     if message.topic == "io.pagure.prod.pagure.pull-request.new":
         pr_data = message.body['pullrequest']
         if pr_data['project']['full_url'] + '.git' in site_list:
-            get_docs_builder(pr_data)
-            post_comment(pr_data)
+            try:
+                get_docs_builder()
+                post_successful_build_comment(pr_data)
+            except Exception as e:
+                print(f"Oops! {e} occured")
+                post_unsuccessful_build_comment(pr_data)
 
     if message.topic == "io.pagure.prod.pagure.pull-request.rebased" or \
             message.topic == 'io.pagure.prod.pagure.pull-request.updated':
         pr_data = message.body['pullrequest']
-        if pr_data['project']['full_url']  +'.git' in site_list:
+        if pr_data['project']['full_url'] + '.git' in site_list:
             get_docs_builder(pr_data)
 
 

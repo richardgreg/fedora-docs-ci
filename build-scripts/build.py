@@ -114,20 +114,17 @@ def build_docs(pr_data):
     return playbook_data
 
 
-def post_comment(pr_data):
+def post_comment(pr_data, comment):
     """
     Posts a comment under the PR with the link to the build
 
-    Args: A dict object with information about a pull request
+    Args:
+        A dict object with information about a pull request
+        Comment that should be posted
     """
     token = os.environ.get("api-key")
     API_KEY = token
     API_ENDPOINT = f"https://pagure.io/api/0/{pr_data['full_url'][18:]}/comment"
-
-    comment = f"Thank you for your contribution. Use the following link to see a \
-preview of your contribution.\nDNS/{pr_data['project']['name']}-pr{pr_data['id']}. \
-Do keep in mind that the build gets deleted if there is no update for more than a \
-period of 2 weeks."
 
     data = {
         'comment': comment
@@ -136,6 +133,39 @@ period of 2 weeks."
     headers = {'Authorization': f'token {API_KEY}'}
 
     requests.post(url=API_ENDPOINT, data=data, headers=headers)
+
+
+def post_successful_build_comment(pr_data):
+    """
+    Posts a comment under the PR when the build is successful
+
+    Args:
+        A dict object with information about a pull request
+        Comment that should be posted
+    """
+
+    comment = f"Thank you for your contribution. Use the following link to see a \
+preview of your contribution.\nDNS/{pr_data['project']['name']}-pr{pr_data['id']}. \
+Do keep in mind that the build gets deleted if there is no update for more than a \
+period of 2 weeks."
+
+    post_comment(pr_data, comment)
+
+
+def post_unsuccessful_build_comment(pr_data):
+    """
+    Posts a comment under the PR when the build fails
+
+    Args: A dict object with information about a pull request
+    """
+
+    comment = f"Thank you for your contribution. Unfortunately your PR did not build \
+for some reason. Keep pushing updates to your PR and use the following link to see a \
+preview of your contribution if it builds succesfully.\nDNS/{pr_data['project']['name']}-pr{pr_data['id']}. \
+Do keep in mind that the build gets deleted if there is no update for more than a \
+period of 2 weeks."
+
+    post_comment(pr_data, comment)
 
 
 if __name__ == "__main__":
