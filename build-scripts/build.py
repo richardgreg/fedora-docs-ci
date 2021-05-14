@@ -145,9 +145,9 @@ def post_successful_build_comment(pr_data):
     """
 
     comment = f"Thank you for your contribution. Use the following link to see a \
-preview of your contribution.\nDNS/{pr_data['project']['name']}-pr{pr_data['id']}. \
-Do keep in mind that the build gets deleted if there is no update for more than a \
-period of 2 weeks."
+    preview of your contribution.\nDNS/{pr_data['project']['name']}-pr{pr_data['id']}. \
+    Do keep in mind that the build gets deleted if there is no update for more than a \
+    period of 2 weeks."
 
     post_comment(pr_data, comment)
 
@@ -159,11 +159,8 @@ def post_unsuccessful_build_comment(pr_data):
     Args: A dict object with information about a pull request
     """
 
-    comment = f"Thank you for your contribution. Unfortunately your PR did not build \
-for some reason. Keep pushing updates to your PR and use the following link to see a \
-preview of your contribution if it builds succesfully.\nDNS/{pr_data['project']['name']}-pr{pr_data['id']}. \
-Do keep in mind that the build gets deleted if there is no update for more than a \
-period of 2 weeks."
+    comment = f"Thank you for your contribution. Unfortunately your PR did "\
+    "not build for some reason. Does it build locally for you?"
 
     post_comment(pr_data, comment)
 

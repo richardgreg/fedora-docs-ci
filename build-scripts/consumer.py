@@ -33,7 +33,7 @@ def build(message):
         pr_data = message.body['pullrequest']
         if pr_data['project']['full_url'] + '.git' in site_list:
             try:
-                get_docs_builder()
+                get_docs_builder(pr_data)
                 post_successful_build_comment(pr_data)
             except Exception as e:
                 print(f"Oops! {e} occured")
